@@ -30,7 +30,7 @@ print(countWords)
 
 important_words = []
 for index in range(len(countWords)):
-    if countWords[index] == 1:
+    if countWords[index] > 1:
         important_words.append(swArray[index])
 print("\n\n")
 print(swArray)
