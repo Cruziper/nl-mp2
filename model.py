@@ -34,9 +34,14 @@ with open("reviews.txt", "r") as rvF:
 
 count_vect = CountVectorizer()
 count_matrix = count_vect.fit_transform(reviews)
-count_array = count_matrix.toarray()
-df = pd.DataFrame(data=count_array,columns = count_vect.get_feature_names())
+# count_array = count_matrix.toarray()
+# df = pd.DataFrame(data=count_array,columns = count_vect.get_feature_names())
 # print(df)
+
+count_matrix2 = count_vect.transform(reviews2)
+
+
+
 
 # ## Tokenized and lower case review words
 # reviewsToken = [] # stores all reviews tokenized
@@ -89,7 +94,7 @@ df = pd.DataFrame(data=count_array,columns = count_vect.get_feature_names())
 # print(reviewsTokenLCstemL)
 
 # Naive Bayes - scikit-learn library
-x = count_array
+x = count_matrix
 y = ranks
 model = MultinomialNB()
 x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.10, random_state=42)
@@ -100,5 +105,7 @@ for i in range(len(y_pred)):
     if i < len(y_pred)-1:
         solF.write("\n")
 accuracy = accuracy_score(y_test, y_pred)*100
+
+pred_test = model.predict(count_matrix2)
 
 print(accuracy)
