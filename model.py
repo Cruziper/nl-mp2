@@ -148,7 +148,7 @@ if __name__ == "__main__":
         if i < len(y_pred)-1:
             solF.write("\n")
     accuracy = accuracy_score(y_test, y_pred)*100
-    print(round(accuracy, 1))
+    print("Accuracy = " + repr(round(accuracy, 1)))
 
     ## Classify new Data
     # pred_test = model.predict(count_matrix2)
@@ -162,7 +162,7 @@ if __name__ == "__main__":
     labels = ["1", "2", "3", "4", "5"]
     
     # create confusion matrix
-    confusionMatrix = getConfusionMatrix(y_test, y_pred)
+    # confusionMatrix = getConfusionMatrix(y_test, y_pred)
     # plot_confusion_matrix(confusionMatrix, labels, "test.png")
 
     pass
