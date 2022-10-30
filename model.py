@@ -1,25 +1,16 @@
 import nltk
-from nltk.corpus import stopwords
-from nltk.stem import PorterStemmer
+from nltk.corpus import stopwords # Not used
+from nltk.stem import PorterStemmer # Not used
 from nltk.stem import LancasterStemmer
 
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import MultinomialNB
-from sklearn.naive_bayes import GaussianNB
+from sklearn.naive_bayes import GaussianNB # Not used
 from sklearn.metrics import accuracy_score
 from sklearn.feature_extraction.text import CountVectorizer
 
 import seaborn
 import matplotlib.pyplot as plt
-
-stopwords = stopwords.words('english')
-
-porter = PorterStemmer()
-lancaster = LancasterStemmer()
-
-ranks = []
-reviews = []
-reviews2 = []
 
 def plot_confusion_matrix(data, labels, output_filename):
     
@@ -110,15 +101,23 @@ def getConfusionMatrix(y_test, y_pred):
     return confusionMatrix
 
 if __name__ == "__main__":
+
+    ## NOT in USE #############################
+    stopwords = stopwords.words('english')
+    porter = PorterStemmer()
+    reviews2 = []
+    ###########################################
+
+    lancaster = LancasterStemmer()
+    ranks = []
+    reviews = []
+
     with open("train.txt", "r") as devF:
         for line in devF:
             rank_review = line.split("\t")
             ranks.append(rank_review[0])
             reviews.append(rank_review[1])
 
-    with open("reviews.txt", "r") as rvF:
-        for line in rvF:
-            reviews2.append(line)
 
     reviewsLC = []
     for review in reviews:
@@ -131,6 +130,10 @@ if __name__ == "__main__":
     count_vect = CountVectorizer()
     count_matrix = count_vect.fit_transform(reviewsLCstem)
 
+    ## Data for classification
+    with open("reviews.txt", "r") as rvF:
+        for line in rvF:
+            reviews2.append(line)
     count_matrix2 = count_vect.transform(reviews2)
 
     # Naive Bayes - scikit-learn library
@@ -147,13 +150,19 @@ if __name__ == "__main__":
     accuracy = accuracy_score(y_test, y_pred)*100
     print(round(accuracy, 1))
 
+    ## Classify new Data
     # pred_test = model.predict(count_matrix2)
+    # solF = open("results.txt", "w")
+    # for i in range(len(pred_test)):
+    #     solF.write(pred_test[i])
+    #     if i < len(pred_test)-1:
+    #         solF.write("\n")
 
     # define labels
     labels = ["1", "2", "3", "4", "5"]
     
     # create confusion matrix
     confusionMatrix = getConfusionMatrix(y_test, y_pred)
-    plot_confusion_matrix(confusionMatrix, labels, "test.png")
+    # plot_confusion_matrix(confusionMatrix, labels, "test.png")
 
     pass
