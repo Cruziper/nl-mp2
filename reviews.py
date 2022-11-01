@@ -11,8 +11,13 @@ from sklearn.model_selection import cross_val_predict
 from sklearn.metrics import confusion_matrix
 import seaborn
 import matplotlib.pyplot as plt
+import argparse
 
 def plot_confusion_matrix(data, labels, output_filename):
+    
+    '''
+    Credit: https://onestopdataanalysis.com/confusion-matrix-python/
+    '''
     
     seaborn.set(color_codes=True)
     plt.figure(1, figsize=(9, 6))
@@ -100,33 +105,37 @@ def getConfusionMatrix(y_test, y_pred):
                 confusionMatrix[4][3] += 1
     return confusionMatrix
 
-if __name__ == "__main__":
+def parseArguments():
+    '''
+    Credit: https://towardsdatascience.com/a-complete-nlp-classification-pipeline-in-scikit-learn-bf1f2d5cdc0d
+    '''
+    parser = argparse.ArgumentParser(description='Please add arguments')
+
+    parser.add_argument('-test', metavar='FILE', required=True,
+        help='txt file containing the reviews to be tested')
+
+    parser.add_argument('-train', metavar='FILE', required=True,
+        help='txt file containing the reviews used in training')
+
+    args = parser.parse_args()
+
+    return args
+
+
+def main(args):
 
     porter = PorterStemmer()
     lancaster = LancasterStemmer()
 
     ranks = []
     reviews = []
-    reviews2 = []
+    testReviews = []
 
-    with open("train.txt", "r") as devF:
+    with open(args.train, "r") as devF:
         for line in devF:
             rank_review = line.split("\t")
             ranks.append(rank_review[0])
             reviews.append(rank_review[1])
-
-    with open("reviews.txt", "r") as rvF:
-        for line in rvF:
-            reviews2.append(line)
-
-    #with open("dev.txt", "r") as devF:
-    #    for line in devF:
-    #       rank_review = line.split("\t")
-    #        ranks.append(rank_review[0])
-    #        reviews.append(rank_review[1])
-
-    #print(ranks)
-    #print(reviews)
 
     reviewsLC = []
     for review in reviews:
@@ -134,49 +143,11 @@ if __name__ == "__main__":
 
     count_vect = CountVectorizer()
     count_matrix = count_vect.fit_transform(reviewsLC)
-    count_matrix2 = count_vect.transform(reviews2)
 
-    ## Tokenized and lower case review words
-    #reviewsToken = [] # stores all reviews tokenized
-    #for review in reviews:
-    #    reviewsToken.append(review.split(" "))
-
-    #reviewsTokenLC = [] # stores all reviews tokenized and lower cased
-    #for review in reviewsToken:
-    #    tempReview = []
-    #    for token in review:
-    #        tempReview.append(token.lower())
-    #    reviewsTokenLC.append(tempReview)
-
-    #print("\nREVIEWS TOKENIZED --------------------------------------------------------------------------------")
-    #print(reviewsToken)
-
-    #print("\nTOKENS LOWER CASE --------------------------------------------------------------------------------")
-    #print(reviewsTokenLC)
-
-    ## Word stemming
-    # Porter Stemming - least aggressive
-    #reviewsTokenLCstemP = [] # stores all reviews tokenized, lower cased and Porter stemmed
-    #for review in reviewsTokenLC:
-    #    tempReview = []
-    #    for token in review:
-    #        tempReview.append(porter.stem(token))
-    #    reviewsTokenLCstemP.append(tempReview)
-
-    #print("\n\nPORTER STEMMED --------------------------------------------------------------------------------")
-    #print(reviewsTokenLCstemP)
-
-
-    # Lancaster Stemming - least aggressive
-    #reviewsTokenLCstemL = [] # stores all reviews tokenized, lower cased and Lancaster stemmed
-    #for review in reviewsTokenLC:
-    #    tempReview = []
-    #    for token in review:
-    #        tempReview.append(lancaster.stem(token))
-    #    reviewsTokenLCstemL.append(tempReview)
-
-    #print("\n\nLANCASTER STEMMED --------------------------------------------------------------------------------")
-    #print(reviewsTokenLCstemL)
+    with open(args.test, "r") as rvF:
+        for line in rvF:
+            testReviews.append(line)
+    count_matrix_test = count_vect.transform(testReviews)
 
     # Cross Validation - scikit-learn library
 
@@ -185,8 +156,9 @@ if __name__ == "__main__":
 
     clf = DecisionTreeClassifier(random_state=43)
 
-    k_folds = KFold(n_splits = 5)
-    sk_folds = StratifiedKFold(n_splits = 5)
+    #TESTED WITH WORSE RESULTS, NOT USED
+    #k_folds = KFold(n_splits = 5)
+    #sk_folds = StratifiedKFold(n_splits = 5)
 
     #scores = cross_val_score(clf, x, y, cv = k_folds)
 
@@ -212,15 +184,27 @@ if __name__ == "__main__":
     scores = cross_val_score(clf, x, y, cv=5)
     y_pred = cross_val_predict(clf, x, y, cv=5)
 
-    print("Cross Validation Scores: ", scores)
-    print("Average CV Score: ", scores.mean())
+    #print("Average CV Score: ", scores.mean())
+
+    pred_test = clf.predict(count_matrix_test)
+    for i in range(len(pred_test)):
+        if i == len(pred_test)-1:
+            print(pred_test[i], end="")
+        else:
+            print(pred_test[i])
 
     # define labels
-    labels = ["1", "2", "3", "4", "5"]
+    labels = ["Poor", "Unsatisfact", "Good", "VeryGood", "Excellent"]
     
     # create confusion matrix
-    confusionMatrix = getConfusionMatrix(y_test, y_pred)
-    plot_confusion_matrix(confusionMatrix, labels, "test.png")
+    #confusionMatrix = getConfusionMatrix(y_test, y_pred)
+    #plot_confusion_matrix(confusionMatrix, labels, "CVwSVM-478.png")
 
     # Naive Bayes - scikit-learn library
+
+if __name__ == "__main__":
+    args = parseArguments()
+    if args.test and args.train:
+        main(args)
     pass
+    
