@@ -11,8 +11,12 @@ from sklearn.feature_extraction.text import CountVectorizer
 
 import seaborn
 import matplotlib.pyplot as plt
+import argparse
 
 def plot_confusion_matrix(data, labels, output_filename):
+    '''
+    Credit: https://onestopdataanalysis.com/confusion-matrix-python/
+    '''
     
     seaborn.set(color_codes=True)
     plt.figure(1, figsize=(9, 6))
@@ -100,19 +104,34 @@ def getConfusionMatrix(y_test, y_pred):
                 confusionMatrix[4][3] += 1
     return confusionMatrix
 
-if __name__ == "__main__":
+def parseArguments():
+    '''
+    Credit: https://towardsdatascience.com/a-complete-nlp-classification-pipeline-in-scikit-learn-bf1f2d5cdc0d
+    '''
+    parser = argparse.ArgumentParser(description='Please add arguments')
 
+    parser.add_argument('-test', metavar='FILE', required=True,
+        help='txt file containing the reviews to be tested')
+
+    parser.add_argument('-train', metavar='FILE', required=True,
+        help='txt file containing the reviews used in training')
+
+    args = parser.parse_args()
+
+    return args
+    
+
+def main(args):
     ## NOT in USE #############################
-    stopwords = stopwords.words('english')
     porter = PorterStemmer()
-    reviews2 = []
     ###########################################
 
     lancaster = LancasterStemmer()
     ranks = []
     reviews = []
+    testReviews = []
 
-    with open("train.txt", "r") as devF:
+    with open(args.train, "r") as devF:
         for line in devF:
             rank_review = line.split("\t")
             ranks.append(rank_review[0])
@@ -131,10 +150,10 @@ if __name__ == "__main__":
     count_matrix = count_vect.fit_transform(reviewsLCstem)
 
     ## Data for classification
-    with open("reviews.txt", "r") as rvF:
+    with open(args.test, "r") as rvF:
         for line in rvF:
-            reviews2.append(line)
-    count_matrix2 = count_vect.transform(reviews2)
+            testReviews.append(line)
+    count_matrix_test = count_vect.transform(testReviews)
 
     # Naive Bayes - scikit-learn library
     x = count_matrix
@@ -142,27 +161,32 @@ if __name__ == "__main__":
     model = MultinomialNB()
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.11, random_state=43, shuffle=True)
     y_pred = model.fit(x_train, y_train).predict(x_test)
-    solF = open("results.txt", "w")
-    for i in range(len(y_pred)):
-        solF.write(y_pred[i])
-        if i < len(y_pred)-1:
-            solF.write("\n")
-    accuracy = accuracy_score(y_test, y_pred)*100
-    print("Accuracy = " + repr(round(accuracy, 1)))
+    # for i in range(len(y_pred)):
+    #     if i == len(y_pred)-1:
+    #         print(y_pred[i], end="")
+    #     else:
+    #         print(y_pred[i])
+    # accuracy = accuracy_score(y_test, y_pred)*100
+    # print("Accuracy = " + repr(round(accuracy, 1)))
 
     ## Classify new Data
-    # pred_test = model.predict(count_matrix2)
-    # solF = open("results.txt", "w")
-    # for i in range(len(pred_test)):
-    #     solF.write(pred_test[i])
-    #     if i < len(pred_test)-1:
-    #         solF.write("\n")
+    pred_test = model.predict(count_matrix_test)
+    for i in range(len(pred_test)):
+        if i == len(pred_test)-1:
+            print(pred_test[i], end="")
+        else:
+            print(pred_test[i])
 
     # define labels
-    labels = ["1", "2", "3", "4", "5"]
+    labels = ["=Poor=", "=Unsatisfactory=", "=Good=", "=VeryGood=", "=Excellent="]
     
     # create confusion matrix
     # confusionMatrix = getConfusionMatrix(y_test, y_pred)
     # plot_confusion_matrix(confusionMatrix, labels, "test.png")
 
+
+if __name__ == "__main__":
+    args = parseArguments()
+    if args.test and args.train:
+        main(args)
     pass
