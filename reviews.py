@@ -9,6 +9,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn import svm
 from sklearn.model_selection import cross_val_predict
 from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score
 import seaborn
 import matplotlib.pyplot as plt
 import argparse
@@ -176,29 +177,32 @@ def main(args):
     #print("Cross Validation Scores: ", scores)
     #print("Average CV Score: ", scores.mean())
 
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.11, random_state=43)
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.25, random_state=43)
 
     clf = svm.SVC(C=1).fit(x_train, y_train)
     #clf.score(x_test, y_test)
 
-    scores = cross_val_score(clf, x, y, cv=5)
-    y_pred = cross_val_predict(clf, x, y, cv=5)
+    scores = cross_val_score(clf, x_test, y_test, cv=5)
+    y_pred = cross_val_predict(clf, x_test, y_test, cv=5)
 
+    acc = accuracy_score(y_test, y_pred)*100
+    print("Accuracy Score: ", acc)
+    
     #print("Average CV Score: ", scores.mean())
 
     pred_test = clf.predict(count_matrix_test)
-    for i in range(len(pred_test)):
-        if i == len(pred_test)-1:
-            print(pred_test[i], end="")
-        else:
-            print(pred_test[i])
+    # for i in range(len(pred_test)):
+    #     if i == len(pred_test)-1:
+    #         print(pred_test[i], end="")
+    #     else:
+    #         print(pred_test[i])
 
     # define labels
     labels = ["Poor", "Unsatisfact", "Good", "VeryGood", "Excellent"]
     
     # create confusion matrix
-    #confusionMatrix = getConfusionMatrix(y_test, y_pred)
-    #plot_confusion_matrix(confusionMatrix, labels, "CVwSVM-478.png")
+    confusionMatrix = getConfusionMatrix(y_test, y_pred)
+    plot_confusion_matrix(confusionMatrix, labels, "CVwSVM-478.png")
 
     # Naive Bayes - scikit-learn library
 
