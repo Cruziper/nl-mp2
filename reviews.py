@@ -155,7 +155,7 @@ def main(args):
     x = count_matrix
     y = ranks
 
-    clf = DecisionTreeClassifier(random_state=43)
+    #clf = DecisionTreeClassifier(random_state=43)
 
     #TESTED WITH WORSE RESULTS, NOT USED
     #k_folds = KFold(n_splits = 5)
@@ -176,8 +176,7 @@ def main(args):
 
     #print("Cross Validation Scores: ", scores)
     #print("Average CV Score: ", scores.mean())
-
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.25, random_state=43)
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.28, random_state=40)
 
     clf = svm.SVC(C=1).fit(x_train, y_train)
     #clf.score(x_test, y_test)
@@ -185,17 +184,17 @@ def main(args):
     scores = cross_val_score(clf, x_test, y_test, cv=5)
     y_pred = cross_val_predict(clf, x_test, y_test, cv=5)
 
-    acc = accuracy_score(y_test, y_pred)*100
-    print("Accuracy Score: ", acc)
+    #acc = accuracy_score(y_test, y_pred)*100
+    #print("Accuracy Score: ", acc)
     
     #print("Average CV Score: ", scores.mean())
 
     pred_test = clf.predict(count_matrix_test)
-    # for i in range(len(pred_test)):
-    #     if i == len(pred_test)-1:
-    #         print(pred_test[i], end="")
-    #     else:
-    #         print(pred_test[i])
+    for i in range(len(pred_test)):
+        if i == len(pred_test)-1:
+            print(pred_test[i], end="")
+        else:
+            print(pred_test[i])
 
     # define labels
     labels = ["Poor", "Unsatisfact", "Good", "VeryGood", "Excellent"]
