@@ -1,13 +1,14 @@
 import nltk
-from nltk.corpus import stopwords # Not used
-from nltk.stem import PorterStemmer # Not used
 from nltk.stem import LancasterStemmer
 
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, ShuffleSplit
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import KFold, StratifiedKFold, cross_val_score
 from sklearn.naive_bayes import MultinomialNB
-from sklearn.naive_bayes import GaussianNB # Not used
 from sklearn.metrics import accuracy_score
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn import svm
+from sklearn.model_selection import cross_val_predict
 
 import seaborn
 import matplotlib.pyplot as plt
@@ -24,9 +25,9 @@ def plot_confusion_matrix(data, labels, output_filename):
     seaborn.set(font_scale=1.5)
     ax = seaborn.heatmap(data, annot=True, cbar_kws={'label': 'Scale'}, fmt='g')
  
-    ax.set_xticklabels(labels)
-    ax.set_yticklabels(labels)
- 
+    ax.set_xticklabels(labels, fontdict={'size': '9'})
+    ax.set_yticklabels(labels, fontdict={'size': '9'})
+
     ax.set(ylabel="True", xlabel="Predicted")
  
     plt.savefig(output_filename, bbox_inches='tight', dpi=300)
@@ -121,15 +122,14 @@ def parseArguments():
     return args
     
 
-def main(args):
-    ## NOT in USE #############################
-    porter = PorterStemmer()
-    ###########################################
+def main(args, model):
 
     lancaster = LancasterStemmer()
     ranks = []
     reviews = []
     testReviews = []
+    # define labels
+    labels = ["=Poor=", "=Unsatisfactory=", "=Good=", "=VeryGood=", "=Excellent="]
 
     with open(args.train, "r") as devF:
         for line in devF:
@@ -146,8 +146,12 @@ def main(args):
     for review in reviewsLC:
         reviewsLCstem.append(lancaster.stem(review))
 
-    count_vect = CountVectorizer()
-    count_matrix = count_vect.fit_transform(reviewsLCstem)
+    if model == "NB":
+        count_vect = CountVectorizer()
+        count_matrix = count_vect.fit_transform(reviewsLCstem)
+    elif model == "SVM":
+        count_vect = CountVectorizer()
+        count_matrix = count_vect.fit_transform(reviewsLC)
 
     ## Data for classification
     with open(args.test, "r") as rvF:
@@ -158,41 +162,63 @@ def main(args):
     # Naive Bayes - scikit-learn library
     x = count_matrix
     y = ranks
-    model = MultinomialNB()
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.11, random_state=43, shuffle=True)
-    y_pred = model.fit(x_train, y_train).predict(x_test)
-    # for i in range(len(y_pred)):
-    #     if i == len(y_pred)-1:
-    #         print(y_pred[i], end="")
-    #     else:
-    #         print(y_pred[i])
-    # accuracy = accuracy_score(y_test, y_pred)*100
-    # print("Accuracy = " + repr(round(accuracy, 1)))
-    # precision = precision_score(y_test, y_pred, average=None)
-    # print("Precision = " + repr(precision))
-    # recall = recall_score(y_test, y_pred, average=None)
-    # print("Recall = " + repr(recall))
-    # f1score = f1_score(y_test, y_pred, average=None)
-    # print("F1 score = " + repr(f1score))
 
-    ## Classify new Data
-    pred_test = model.predict(count_matrix_test)
-    for i in range(len(pred_test)):
-        if i == len(pred_test)-1:
-            print(pred_test[i], end="")
-        else:
-            print(pred_test[i])
+    if model == "NB":
+        model = MultinomialNB()
+        x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.11, random_state=43, shuffle=True)
+        y_pred = model.fit(x_train, y_train).predict(x_test)
+        # for i in range(len(y_pred)):
+        #     if i == len(y_pred)-1:
+        #         print(y_pred[i], end="")
+        #     else:
+        #         print(y_pred[i])
+        # accuracy = accuracy_score(y_test, y_pred)*100
+        # print("Accuracy = " + repr(round(accuracy, 1)))
+        # precision = precision_score(y_test, y_pred, average=None)
+        # print("Precision = " + repr(precision))
+        # recall = recall_score(y_test, y_pred, average=None)
+        # print("Recall = " + repr(recall))
+        # f1score = f1_score(y_test, y_pred, average=None)
+        # print("F1 score = " + repr(f1score))
 
-    # define labels
-    labels = ["=Poor=", "=Unsatisfactory=", "=Good=", "=VeryGood=", "=Excellent="]
-    
-    # create confusion matrix
-    # confusionMatrix = getConfusionMatrix(y_test, y_pred)
-    # plot_confusion_matrix(confusionMatrix, labels, "test.png")
+        ## Classify new Data
+        pred_test = model.predict(count_matrix_test)
+        for i in range(len(pred_test)):
+            if i == len(pred_test)-1:
+                print(pred_test[i], end="")
+            else:
+                print(pred_test[i])
+        
+        # create confusion matrix
+        confusionMatrix = getConfusionMatrix(y_test, y_pred)
+        plot_confusion_matrix(confusionMatrix, labels, "test.png")
+
+    elif model == "SVM":
+        x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.28, random_state=40)
+
+        clf = svm.SVC(C=1).fit(x_train, y_train)
+        #clf.score(x_test, y_test)
+
+        scores = cross_val_score(clf, x_test, y_test, cv=5)
+        y_pred = cross_val_predict(clf, x_test, y_test, cv=5)
+
+        # accuracy = accuracy_score(y_test, y_pred)*100
+        # print("Accuracy Score: " + repr(round(accuracy, 1)))
+        pred_test = clf.predict(count_matrix_test)
+        for i in range(len(pred_test)):
+            if i == len(pred_test)-1:
+                print(pred_test[i], end="")
+            else:
+                print(pred_test[i])
+        confusionMatrix = getConfusionMatrix(y_test, y_pred)
+        plot_confusion_matrix(confusionMatrix, labels, "CVwSVM-478.png")  
 
 
 if __name__ == "__main__":
+    ## MODELS ##
+    nbFlag = "NB" # Naive Bayes Classifier
+    svmFlag = "SVM" # Support Vector Machine
     args = parseArguments()
     if args.test and args.train:
-        main(args)
+        main(args, nbFlag)
     pass
