@@ -168,6 +168,12 @@ def main(args):
     #         print(y_pred[i])
     # accuracy = accuracy_score(y_test, y_pred)*100
     # print("Accuracy = " + repr(round(accuracy, 1)))
+    # precision = precision_score(y_test, y_pred, average=None)
+    # print("Precision = " + repr(precision))
+    # recall = recall_score(y_test, y_pred, average=None)
+    # print("Recall = " + repr(recall))
+    # f1score = f1_score(y_test, y_pred, average=None)
+    # print("F1 score = " + repr(f1score))
 
     ## Classify new Data
     pred_test = model.predict(count_matrix_test)
